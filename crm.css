@@ -1,0 +1,421 @@
+/* CRM Specific Styles - Extends styles.css */
+/* Reusing variables from styles.css */
+
+.crm-body {
+    background-color: var(--bg-light);
+    height: 100vh;
+    overflow: hidden;
+    /* We handle scrolling internally */
+}
+
+/* ---------------------------------
+   LOGIN
+-----------------------------------*/
+.crm-login-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: linear-gradient(135deg, var(--bg-body) 0%, #f0ebf8 100%);
+}
+
+.crm-login-card {
+    background: white;
+    padding: 48px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-md);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.crm-login-logo {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-bottom: 8px;
+}
+
+.crm-login-subtitle {
+    color: var(--text-light);
+    margin-bottom: 32px;
+}
+
+.form-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    color: var(--text-medium);
+    font-weight: 500;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius-sm);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(130, 10, 209, 0.1);
+}
+
+.login-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 14px;
+}
+
+.back-link {
+    display: block;
+    margin-top: 24px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+}
+
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+.error-msg {
+    color: #ff4757;
+    background-color: #fff0f1;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    margin-bottom: 16px;
+}
+
+/* ---------------------------------
+   DASHBOARD LAYOUT
+-----------------------------------*/
+.crm-layout {
+    display: flex;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* Sidebar */
+.crm-sidebar {
+    width: 260px;
+    background-color: white;
+    border-right: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    z-index: 10;
+}
+
+.crm-sidebar-header {
+    padding: 24px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.crm-sidebar-header h3 {
+    color: var(--primary-color);
+    margin: 0;
+}
+
+.crm-nav {
+    padding: 20px 0;
+    flex: 1;
+}
+
+.crm-nav-item {
+    display: block;
+    padding: 12px 24px;
+    color: var(--text-medium);
+    font-weight: 500;
+    transition: all 0.2s;
+    border-left: 3px solid transparent;
+}
+
+.crm-nav-item:hover {
+    background-color: var(--bg-light);
+    color: var(--text-dark);
+}
+
+.crm-nav-item.active {
+    background-color: rgba(130, 10, 209, 0.05);
+    color: var(--primary-color);
+    border-left-color: var(--primary-color);
+}
+
+.crm-sidebar-footer {
+    padding: 24px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Main Area */
+.crm-main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-light);
+    overflow: hidden;
+}
+
+.crm-topbar {
+    background: white;
+    height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.crm-topbar h2 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.btn-sm {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.crm-content-area {
+    flex: 1;
+    padding: 32px;
+    overflow-y: auto;
+}
+
+/* ---------------------------------
+   COMPONENTS
+-----------------------------------*/
+/* Stats */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 24px;
+}
+
+.stat-card {
+    background: white;
+    padding: 24px;
+    border-radius: var(--border-radius-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.stat-card h4 {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.stat-card .number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-dark);
+}
+
+.trend.positive {
+    color: #2ed573;
+    font-size: 0.85rem;
+    font-weight: 500;
+    display: inline-block;
+    margin-top: 8px;
+}
+
+/* Tables */
+.table-card {
+    background: white;
+    border-radius: var(--border-radius-sm);
+    overflow: hidden;
+}
+
+.crm-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.crm-table th,
+.crm-table td {
+    padding: 16px 24px;
+    text-align: left;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.crm-table th {
+    background-color: #fcfcfc;
+    color: var(--text-light);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.crm-table td {
+    font-size: 0.95rem;
+    color: var(--text-medium);
+}
+
+.status-badge {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.status-active {
+    background: #e0f8e9;
+    color: #2ed573;
+}
+
+.status-inactive {
+    background: #ffebee;
+    color: #ff4757;
+}
+
+/* Filter & Selectors */
+.filter-bar {
+    margin-bottom: 24px;
+    display: flex;
+    gap: 16px;
+}
+
+.crm-select {
+    padding: 10px 16px;
+    border: 1px solid #ddd;
+    border-radius: var(--border-radius-sm);
+    font-family: inherit;
+    font-size: 1rem;
+    min-width: 250px;
+    background-color: white;
+}
+
+/* Kanban (Social Media) */
+.kanban-board {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+
+.kanban-column {
+    flex: 1;
+    background-color: #f1f2f6;
+    border-radius: var(--border-radius-sm);
+    padding: 16px;
+    min-height: 400px;
+}
+
+.kanban-header {
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+}
+
+.kanban-card {
+    background: white;
+    padding: 16px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 12px;
+    cursor: pointer;
+    border-left: 4px solid var(--primary-color);
+}
+
+.kanban-card h5 {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.kanban-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+.tag {
+    background: #eef2f5;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+}
+
+/* ---------------------------------
+   MODALS
+-----------------------------------*/
+.crm-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.crm-modal-content {
+    background: white;
+    width: 100%;
+    max-width: 500px;
+    border-radius: var(--border-radius-md);
+    box-shadow: var(--shadow-hover);
+    padding: 32px;
+    position: relative;
+    animation: modalFadeIn 0.3s ease;
+}
+
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.crm-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.crm-modal-header h3 {
+    margin: 0;
+    color: var(--text-dark);
+}
+
+.close-modal {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--text-light);
+}
+
+.close-modal:hover {
+    color: #ff4757;
+}
+
+.crm-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 32px;
+}

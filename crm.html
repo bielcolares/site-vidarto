@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestão Vidarto | CRM</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="crm.css">
+</head>
+
+<body class="crm-body">
+
+    <!-- ==========================================
+         LOGIN VIEW 
+         ========================================== -->
+    <div id="login-view" class="crm-login-container">
+        <div class="crm-login-card">
+            <h2 class="crm-login-logo">Vidarto Gestão</h2>
+            <p class="crm-login-subtitle">Área restrita para equipe</p>
+
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" placeholder="Digite seu usuário..." required autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" placeholder="Digite sua senha..." required>
+                </div>
+                <div id="login-error" class="error-msg" style="display: none;">Usuário ou senha incorretos.</div>
+                <button type="submit" class="btn btn-primary login-btn">Entrar</button>
+            </form>
+            <a href="index.html" class="back-link">&larr; Voltar ao site</a>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         DASHBOARD VIEW (Hidden by default)
+         ========================================== -->
+    <div id="dashboard-view" class="crm-layout" style="display: none;">
+
+        <!-- Sidebar -->
+        <aside class="crm-sidebar">
+            <div class="crm-sidebar-header">
+                <h3>Vidarto Gestão</h3>
+            </div>
+            <nav class="crm-nav">
+                <a href="#" class="crm-nav-item active" data-target="dashboard">📊 Visão Geral</a>
+                <a href="#" class="crm-nav-item" data-target="clients">👥 Clientes</a>
+                <a href="#" class="crm-nav-item" data-target="social">📱 Social Media</a>
+                <a href="#" class="crm-nav-item" data-target="traffic">📈 Tráfego Pago</a>
+            </nav>
+            <div class="crm-sidebar-footer">
+                <div class="user-info">👤 Admin</div>
+                <button id="logout-btn" class="btn-text" style="color: #ff4757; font-size: 0.9rem;">Sair</button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="crm-main-content">
+
+            <header class="crm-topbar">
+                <h2 id="page-title">Visão Geral</h2>
+                <div class="topbar-actions">
+                    <button id="btn-new-client" class="btn btn-primary btn-sm">+ Novo Cliente</button>
+                </div>
+            </header>
+
+            <div class="crm-content-area">
+
+                <!-- VIEW: Dashboard -->
+                <div id="view-dashboard" class="crm-view active">
+
+                    <div class="filter-bar">
+                        <select id="dashboard-client-selector" class="crm-select">
+                            <option value="all">Visão Geral (Todos os Clientes)</option>
+                            <!-- Populated by JS -->
+                        </select>
+                    </div>
+
+                    <div class="stats-grid" id="dashboard-stats-grid">
+                        <!-- Populated dynamically via JS to support either global or client specific stats -->
+                    </div>
+
+                    <!-- Charts Area -->
+                    <div id="dashboard-charts" style="display: none; margin-top: 32px; gap: 24px; flex-wrap: wrap;">
+                        <div class="card" style="flex: 1; min-width: 400px; padding: 24px;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-dark);">Crescimento de Seguidores
+                                (Histórico)</h4>
+                            <canvas id="chartFollowers"></canvas>
+                        </div>
+                        <div class="card" style="flex: 1; min-width: 400px; padding: 24px;">
+                            <h4 style="margin-bottom: 16px; color: var(--text-dark);">Desempenho de Tráfego</h4>
+                            <canvas id="chartTraffic"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: Clientes -->
+                <div id="view-clients" class="crm-view" style="display: none;">
+                    <div class="card table-card">
+                        <table class="crm-table">
+                            <thead>
+                                <tr>
+                                    <th>Cód.</th>
+                                    <th>Nome do Cliente</th>
+                                    <th>Serviços Ativos</th>
+                                    <th>Status</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="client-list-body">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- VIEW: Social Media -->
+                <div id="view-social" class="crm-view" style="display: none;">
+                    <div class="filter-bar" style="justify-content: space-between;">
+                        <select id="social-client-selector" class="crm-select">
+                            <option value="all">Selecione o Cliente...</option>
+                            <!-- Populated by JS -->
+                        </select>
+                        <button id="btn-new-task" class="btn btn-primary btn-sm">+ Nova Tarefa/Post</button>
+                    </div>
+
+                    <div class="kanban-board">
+
+                        <div class="kanban-column">
+                            <div class="kanban-header">📝 A Produzir</div>
+                            <div class="kanban-cards" id="social-todo">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="kanban-column">
+                            <div class="kanban-header">🎨 Em Arte/Revisão</div>
+                            <div class="kanban-cards" id="social-doing">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                        <div class="kanban-column">
+                            <div class="kanban-header">✅ Aprovado / Programado</div>
+                            <div class="kanban-cards" id="social-done">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- VIEW: Traffic -->
+                <div id="view-traffic" class="crm-view" style="display: none;">
+                    <div class="filter-bar" style="justify-content: space-between;">
+                        <select id="traffic-client-selector" class="crm-select">
+                            <option value="none">Selecione o Cliente...</option>
+                            <!-- Populated by JS -->
+                        </select>
+                        <button id="btn-new-traffic" class="btn btn-primary btn-sm" style="display: none;">+ Nova
+                            Campanha</button>
+                    </div>
+
+                    <div id="traffic-metrics-container" style="display: none;">
+                        <h3 id="traffic-client-name" style="margin-bottom: 20px;">Visão 360º de Tráfego</h3>
+                        <!-- Aggregated Stats -->
+                        <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 32px;">
+                            <div class="stat-card">
+                                <h4>Investimento Aglomerado</h4>
+                                <div class="number" id="tr-total-budget">R$ 0</div>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Gasto Total</h4>
+                                <div class="number" id="tr-total-spent">R$ 0</div>
+                            </div>
+                            <div class="stat-card">
+                                <h4>CPL Médio</h4>
+                                <div class="number" id="tr-avg-cpl">R$ 0,00</div>
+                            </div>
+                            <div class="stat-card">
+                                <h4>Total de Leads</h4>
+                                <div class="number" id="tr-total-leads">0</div>
+                            </div>
+                        </div>
+
+                        <!-- Campaigns List -->
+                        <h4 style="margin-bottom: 16px; color: var(--text-dark);">Campanhas Ativas</h4>
+                        <div class="card table-card">
+                            <table class="crm-table">
+                                <thead>
+                                    <tr>
+                                        <th>Campanha</th>
+                                        <th>Início</th>
+                                        <th>Orçamento</th>
+                                        <th>Gasto</th>
+                                        <th>Leads (CPL)</th>
+                                        <th>Desempenho</th>
+                                        <th>Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="traffic-campaigns-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="traffic-empty-state" style="text-align: center; padding: 50px; color: #777;">
+                        Selecione um cliente para visualizar as métricas de tráfego.
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         MODALS 
+         ========================================== -->
+    <!-- Modal: Add/Edit Client -->
+    <div id="modal-client" class="crm-modal">
+        <div class="crm-modal-content">
+            <div class="crm-modal-header">
+                <h3 id="modal-client-title">Novo Cliente</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="form-client">
+                <input type="hidden" id="client-id">
+                <div class="form-group">
+                    <label>Nome do Cliente / Empresa</label>
+                    <input type="text" id="client-name" required>
+                </div>
+                <div class="form-group">
+                    <label>Serviços Contratados (separados por vírgula)</label>
+                    <input type="text" id="client-services" placeholder="ex: Social Media, Tráfego" required>
+                </div>
+                <!-- NOVO: Seguidores e Engajamento -->
+                <div class="form-group" style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <label>Seguidores Atuais</label>
+                        <input type="number" id="client-followers" value="0" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Engajamento Mensal (%)</label>
+                        <input type="number" step="0.1" id="client-engagement" value="0.0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="client-status" class="crm-select" style="width: 100%;">
+                        <option value="active">Ativo</option>
+                        <option value="inactive">Inativo</option>
+                    </select>
+                </div>
+                <div class="crm-modal-footer" style="justify-content: space-between;">
+                    <button type="button" class="btn btn-text close-modal-btn btn-delete-client"
+                        style="color: #ff4757; display: none;">Excluir Cliente</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary close-modal-btn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Cliente</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add Task (Social Media) -->
+    <div id="modal-task" class="crm-modal">
+        <div class="crm-modal-content">
+            <div class="crm-modal-header">
+                <h3>Nova Tarefa (Social Media)</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="form-task">
+                <div class="form-group">
+                    <label>Cliente</label>
+                    <select id="task-client" class="crm-select" style="width: 100%;" required>
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Título do Post/Tarefa</label>
+                    <input type="text" id="task-title" placeholder="Ex: Carrossel Dicas" required>
+                </div>
+                <div class="form-group" style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <label>Plataforma</label>
+                        <select id="task-platform" class="crm-select" style="width: 100%;">
+                            <option value="Instagram">Instagram</option>
+                            <option value="LinkedIn">LinkedIn</option>
+                            <option value="Facebook">Facebook</option>
+                            <option value="TikTok">TikTok</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Data</label>
+                        <input type="text" id="task-date" placeholder="Ex: 20/Nov" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Status Atual</label>
+                    <select id="task-status" class="crm-select" style="width: 100%;">
+                        <option value="todo">A Produzir</option>
+                        <option value="doing">Em Arte/Revisão</option>
+                        <option value="done">Aprovado / Programado</option>
+                    </select>
+                </div>
+                <div class="crm-modal-footer" style="justify-content: space-between;">
+                    <button type="button" class="btn btn-text close-modal-btn btn-delete-task"
+                        style="color: #ff4757; display: none;">Excluir Tarefa</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary close-modal-btn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Adicionar Tarefa</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Traffic Campaign -->
+    <div id="modal-traffic" class="crm-modal">
+        <div class="crm-modal-content">
+            <div class="crm-modal-header">
+                <h3 id="modal-traffic-title">Nova Campanha de Tráfego</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="form-traffic">
+                <input type="hidden" id="traffic-id">
+                <div class="form-group">
+                    <label>Nome da Campanha / Objetivo</label>
+                    <input type="text" id="traffic-name" placeholder="Ex: Captação E-book Nov" required>
+                </div>
+                <div class="form-group" style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <label>Data de Início</label>
+                        <input type="date" id="traffic-start" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Orçamento (R$)</label>
+                        <input type="number" step="0.01" id="traffic-budget" required>
+                    </div>
+                </div>
+                <div class="form-group" style="display: flex; gap: 16px;">
+                    <div style="flex: 1;">
+                        <label>Valor Gasto (R$)</label>
+                        <input type="number" step="0.01" id="traffic-spent" value="0" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Leads Gerados</label>
+                        <input type="number" id="traffic-leads" value="0" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notas de Desempenho (Visão do Gestor)</label>
+                    <textarea id="traffic-notes" rows="3"
+                        style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-family: inherit;"
+                        placeholder="Ex: CPL está caindo, criativo A perfomando melhor..."></textarea>
+                </div>
+                <div class="crm-modal-footer" style="justify-content: space-between;">
+                    <button type="button" class="btn btn-text close-modal-btn btn-delete-traffic"
+                        style="color: #ff4757; display: none;">Excluir Campanha</button>
+                    <div>
+                        <button type="button" class="btn btn-secondary close-modal-btn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Campanha</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="crm.js"></script>
+</body>
+
+</html>
