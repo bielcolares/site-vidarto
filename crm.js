@@ -363,6 +363,12 @@ function renderKanban(clientId) {
         cardNode.addEventListener('dragend', () => cardNode.style.opacity = '1');
         cardNode.addEventListener('click', () => openEditTaskModal(post.id));
 
+        let displayDate = post.date;
+        if (post.date && post.date.includes('-')) {
+            const parts = post.date.split('-');
+            displayDate = `${parts[2]}/${parts[1]}`;
+        }
+
         cardNode.innerHTML = `
             <h5>${post.title}</h5>
             <div class="kanban-meta" style="margin-bottom: 8px;">
@@ -370,7 +376,7 @@ function renderKanban(clientId) {
             </div>
             <div class="kanban-meta">
                 <span class="tag">${post.platform}</span>
-                <span style="font-weight: 500;">🗓 ${post.date}</span>
+                <span style="font-weight: 500;">🗓 ${displayDate}</span>
             </div>
         `;
 
