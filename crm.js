@@ -43,6 +43,7 @@ async function loadDB() {
     }));
 
     initDashboard();
+    checkAlerts();
 }
 
 // --- Elements ---
@@ -60,6 +61,8 @@ const pageTitle = document.getElementById('page-title');
 const modalClient = document.getElementById('modal-client');
 const modalTask = document.getElementById('modal-task');
 const modalTraffic = document.getElementById('modal-traffic');
+const modalAlerts = document.getElementById('modal-alerts');
+
 const btnNewClient = document.getElementById('btn-new-client');
 const btnNewTask = document.getElementById('btn-new-task');
 const btnNewTraffic = document.getElementById('btn-new-traffic');
@@ -77,11 +80,12 @@ const selectors = [
 ];
 
 // Close Modals
-document.querySelectorAll('.close-modal, .close-modal-btn').forEach(btn => {
+document.querySelectorAll('.close-modal, .close-modal-btn, .close-alerts-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         modalClient.style.display = 'none';
         modalTask.style.display = 'none';
         modalTraffic.style.display = 'none';
+        if (modalAlerts) modalAlerts.style.display = 'none';
     });
 });
 
@@ -522,6 +526,76 @@ function renderTraffic(clientId) {
     document.getElementById('tr-total-spent').innerText = formatMoney(totalSpent);
     document.getElementById('tr-total-leads').innerText = totalLeads;
     document.getElementById('tr-avg-cpl').innerText = formatMoney(avgCPL);
+}
+
+// --- ALERTS ENGINE ---
+function checkAlerts() {
+    if (!modalAlerts) return;
+    const container = document.getElementById('alerts-container');
+    container.innerHTML = ''; // Limpar antes
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const todayMillis = new Date(todayStr + "T00:00:00").getTime();
+
+    let lates = [];
+    let todays = [];
+    let pendings = [];
+
+    db.socialPosts.forEach(post => {
+        if (!post.date || post.status === 'done') return;
+
+        const postMillis = new Date(post.date + "T00:00:00").getTime();
+        const clientName = db.clients.find(c => c.id === post.clientId)?.name || 'Cliente Removido';
+
+        const alertObj = { ...post, clientName };
+
+        if (post.status === 'doing') {
+            pendings.push(alertObj); // Em arte/revisão (Cobrar)
+        } else if (postMillis < todayMillis) {
+            lates.push(alertObj);    // Atrasados
+        } else if (postMillis === todayMillis) {
+            todays.push(alertObj);   // Para hoje
+        }
+    });
+
+    if (lates.length === 0 && todays.length === 0 && pendings.length === 0) {
+        // Sem alertas
+        return;
+    }
+
+    let html = '';
+
+    const createHTMLItem = (type, item, badgeText) => {
+        const parts = item.date.split('-');
+        const dDate = `${parts[2]}/${parts[1]}`;
+        return `
+            <div class="alert-item ${type}" onclick="openEditTaskModal(${item.id})" style="cursor: pointer;">
+                <div>
+                    <div class="alert-task-desc">${item.title}</div>
+                    <div class="alert-client-name">${item.clientName} | ${item.platform}</div>
+                </div>
+                <div class="alert-date-badge">${dDate} - ${badgeText}</div>
+            </div>
+        `;
+    };
+
+    if (lates.length > 0) {
+        html += `<div class="alert-section-title" style="color: #ff4757;">🔴 Posts Atrasados</div>`;
+        lates.forEach(i => html += createHTMLItem('late', i, 'Atrasado'));
+    }
+
+    if (todays.length > 0) {
+        html += `<div class="alert-section-title" style="color: #ffa502;">🟡 Para Hoje</div>`;
+        todays.forEach(i => html += createHTMLItem('today', i, 'Hoje'));
+    }
+
+    if (pendings.length > 0) {
+        html += `<div class="alert-section-title" style="color: #3742fa;">🔵 Cobrar Cliente (Aprovação)</div>`;
+        pendings.forEach(i => html += createHTMLItem('pending', i, 'Pendente'));
+    }
+
+    container.innerHTML = html;
+    modalAlerts.style.display = 'flex';
 }
 
 // --- CRUD Actions ---

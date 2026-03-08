@@ -387,6 +387,27 @@
         </div>
     </div>
 
+    <!-- Modal: Alerts (To-Do Popup) -->
+    <div id="modal-alerts" class="crm-modal">
+        <div class="crm-modal-content" style="max-width: 600px;">
+            <div class="crm-modal-header" style="border-bottom: 2px solid #f1f2f6; padding-bottom: 16px;">
+                <h3 style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.5rem;">🚨</span> Resumo de Pendências
+                </h3>
+                <button class="close-modal close-alerts-btn">&times;</button>
+            </div>
+
+            <div id="alerts-container" style="max-height: 60vh; overflow-y: auto; padding-right: 8px;">
+                <!-- Populated dynamically by JS -->
+            </div>
+
+            <div class="crm-modal-footer">
+                <button type="button" class="btn btn-primary close-alerts-btn" style="width: 100%;">Entendi, vamos
+                    trabalhar!</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module" src="crm.js"></script>
 </body>
 
