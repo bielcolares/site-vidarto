@@ -1,37 +1,47 @@
-// CRM LocalStorage Data & Logic
+import { createClient } from '@supabase/supabase-js';
 
-// --- Default Data (Only used if Storage is empty) ---
-const defaultDB = {
-    clients: [
-        { id: 'C001', name: 'Tech Solutions Ltda', services: 'Social Media, Tráfego', status: 'active', followers: 15400, engagement: 4.2 },
-        { id: 'C002', name: 'Clínica Sorriso', services: 'Branding, Sites', status: 'active', followers: 3200, engagement: 2.1 },
-        { id: 'C003', name: 'Restaurante Sabor', services: 'Social Media', status: 'inactive', followers: 8500, engagement: 5.5 }
-    ],
-    socialPosts: [
-        { id: 1, clientId: 'C001', title: 'Carrossel: Benefícios Cloud', date: '10/Nov', status: 'done', platform: 'Instagram' },
-        { id: 2, clientId: 'C001', title: 'Vídeo Reels Institucional', date: '12/Nov', status: 'doing', platform: 'Instagram' },
-        { id: 3, clientId: 'C001', title: 'Post: Vagas Tech', date: '08/Nov', status: 'done', platform: 'LinkedIn' },
-        { id: 4, clientId: 'C002', title: 'Promoção Pizza', date: '15/Nov', status: 'todo', platform: 'Facebook' }
-    ],
-    trafficCampaigns: [
-        { id: 1, clientId: 'C001', name: 'Captação Leads B2B', startDate: '2025-10-01', budget: 5000, spent: 3200, leads: 145, notes: 'Campanha rodando muito bem no LinkedIn.' },
-        { id: 2, clientId: 'C002', name: 'Campanha de Branding Local', startDate: '2025-11-01', budget: 2000, spent: 500, leads: 0, notes: 'Foco em alcance, sem objetivo de lead direto.' }
-    ]
-};
+const supabaseUrl = 'https://rjfryrxpefqhassrunwr.supabase.co';
+const supabaseKey = 'sb_publishable_c9YI8BVA46ERMS-Jnq2Oqw_ws6536BW';
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Initialize DB
-let db = JSON.parse(localStorage.getItem('vidartoCRM')) || defaultDB;
+let db = { clients: [], socialPosts: [], trafficCampaigns: [] };
 
-// Migration: ensure clients have followers/engagement
-let needsSave = false;
-db.clients.forEach(c => {
-    if (c.followers === undefined) { c.followers = 0; needsSave = true; }
-    if (c.engagement === undefined) { c.engagement = 0.0; needsSave = true; }
-});
-if (needsSave) saveDB();
+async function loadDB() {
+    const [clientsRes, postsRes, trafficRes] = await Promise.all([
+        supabase.from('clients').select('*'),
+        supabase.from('posts').select('*'),
+        supabase.from('traffic').select('*')
+    ]);
 
-function saveDB() {
-    localStorage.setItem('vidartoCRM', JSON.stringify(db));
+    db.clients = (clientsRes.data || []).map(c => ({
+        id: c.id,
+        name: c.name,
+        services: c.segment || '',
+        status: c.active ? 'active' : 'inactive',
+        followers: Number(c.followers) || 0,
+        engagement: Number(c.engagement) || 0
+    }));
+
+    db.socialPosts = (postsRes.data || []).map(p => ({
+        id: p.id,
+        clientId: p.client_id,
+        title: p.title,
+        platform: p.type || '',
+        date: p.date,
+        status: p.status
+    }));
+
+    db.trafficCampaigns = (trafficRes.data || []).map(t => ({
+        id: t.id,
+        clientId: t.client_id,
+        name: t.campaign_name,
+        startDate: t.start_date,
+        budget: Number(t.budget) || 0,
+        spent: Number(t.spent) || 0,
+        leads: Number(t.leads) || 0,
+        notes: t.details || ''
+    }));
+
     initDashboard();
 }
 
@@ -76,25 +86,47 @@ document.querySelectorAll('.close-modal, .close-modal-btn').forEach(btn => {
 });
 
 // --- Login Logic ---
-loginForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const user = document.getElementById('username').value;
-    const pass = document.getElementById('password').value;
-
-    if (user === 'admin' && pass === 'admin123') {
-        loginError.style.display = 'none';
+supabase.auth.getSession().then(({ data: { session } }) => {
+    if (session) {
         loginView.style.display = 'none';
         dashboardView.style.display = 'flex';
-        initDashboard();
-    } else {
-        loginError.style.display = 'block';
+        loadDB();
     }
 });
 
-logoutBtn.addEventListener('click', () => {
+loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const user = document.getElementById('username').value;
+    const pass = document.getElementById('password').value;
+    const btnSubmit = loginForm.querySelector('button[type="submit"]');
+
+    btnSubmit.innerText = 'Entrando...';
+    btnSubmit.disabled = true;
+
+    const { error } = await supabase.auth.signInWithPassword({
+        email: user,
+        password: pass,
+    });
+
+    btnSubmit.innerText = 'Entrar';
+    btnSubmit.disabled = false;
+
+    if (error) {
+        loginError.style.display = 'block';
+    } else {
+        loginError.style.display = 'none';
+        loginView.style.display = 'none';
+        dashboardView.style.display = 'flex';
+        await loadDB();
+    }
+});
+
+logoutBtn.addEventListener('click', async () => {
+    await supabase.auth.signOut();
     dashboardView.style.display = 'none';
     loginView.style.display = 'flex';
     document.getElementById('password').value = '';
+    document.getElementById('username').value = '';
 });
 
 // --- Navigation Logic ---
@@ -356,14 +388,16 @@ function setupDropZone(columnElement, newStatus) {
     columnElement.addEventListener('dragover', (e) => { e.preventDefault(); columnElement.style.backgroundColor = '#e1e5eb'; });
     columnElement.addEventListener('dragleave', (e) => { columnElement.style.backgroundColor = ''; });
 
-    columnElement.addEventListener('drop', (e) => {
+    columnElement.addEventListener('drop', async (e) => {
         e.preventDefault();
         columnElement.style.backgroundColor = '';
         const postId = e.dataTransfer.getData('text/plain');
         const postIdx = db.socialPosts.findIndex(p => p.id == postId);
         if (postIdx > -1 && db.socialPosts[postIdx].status !== newStatus) {
             db.socialPosts[postIdx].status = newStatus;
-            saveDB();
+            const currSocialFiltered = document.getElementById('social-client-selector').value;
+            renderKanban(currSocialFiltered);
+            await supabase.from('posts').update({ status: newStatus }).eq('id', postId);
         }
     });
 }
@@ -453,40 +487,47 @@ function openEditClientModal(id) {
     document.getElementById('client-status').value = client.status;
 
     btnDelClient.style.display = 'block';
-    btnDelClient.onclick = () => {
+    btnDelClient.onclick = async () => {
         if (confirm("Tem certeza que deseja excluir este cliente? Suas tarefas e métricas também serão perdidas.")) {
+            // Optimistic update locally
             db.clients = db.clients.filter(c => c.id !== id);
             db.socialPosts = db.socialPosts.filter(p => p.clientId !== id);
             db.trafficCampaigns = db.trafficCampaigns.filter(t => t.clientId !== id);
             modalClient.style.display = 'none';
-            saveDB();
+            initDashboard(); // re-render fast
+            await supabase.from('clients').delete().eq('id', id);
         }
     };
 
     modalClient.style.display = 'flex';
 }
 
-formClient.addEventListener('submit', (e) => {
+formClient.addEventListener('submit', async (e) => {
     e.preventDefault();
     const idField = document.getElementById('client-id').value;
+    const btnSubmit = formClient.querySelector('button[type="submit"]');
+    const originalText = btnSubmit.innerText;
+    btnSubmit.innerText = 'Salvando...';
+    btnSubmit.disabled = true;
+
     const clientData = {
         name: document.getElementById('client-name').value,
-        services: document.getElementById('client-services').value,
-        status: document.getElementById('client-status').value,
-        followers: document.getElementById('client-followers').value,
-        engagement: document.getElementById('client-engagement').value
+        segment: document.getElementById('client-services').value,
+        active: document.getElementById('client-status').value === 'active',
+        followers: Number(document.getElementById('client-followers').value),
+        engagement: Number(document.getElementById('client-engagement').value)
     };
 
     if (idField) {
-        const idx = db.clients.findIndex(c => c.id === idField);
-        if (idx !== -1) db.clients[idx] = { ...db.clients[idx], ...clientData };
+        await supabase.from('clients').update(clientData).eq('id', idField);
     } else {
-        const newId = 'C' + String(db.clients.length + 1).padStart(3, '0');
-        db.clients.push({ id: newId, ...clientData });
+        await supabase.from('clients').insert([clientData]);
     }
 
+    btnSubmit.innerText = originalText;
+    btnSubmit.disabled = false;
     modalClient.style.display = 'none';
-    saveDB();
+    await loadDB();
 });
 
 // Form: Task (Social Media)
@@ -499,6 +540,8 @@ btnNewTask.addEventListener('click', () => {
     const currSocialFiltered = document.getElementById('social-client-selector').value;
     if (currSocialFiltered !== 'all') {
         document.getElementById('task-client').value = currSocialFiltered;
+    } else if (db.clients.length > 0) {
+        document.getElementById('task-client').value = db.clients[0].id;
     }
     modalTask.style.display = 'flex';
 });
@@ -515,37 +558,43 @@ function openEditTaskModal(id) {
     document.getElementById('task-status').value = post.status;
 
     btnDelTask.style.display = 'block';
-    btnDelTask.onclick = () => {
+    btnDelTask.onclick = async () => {
         if (confirm("Tem certeza que deseja excluir esta tarefa?")) {
-            db.socialPosts = db.socialPosts.filter(p => p.id != id);
+            await supabase.from('posts').delete().eq('id', id);
             modalTask.style.display = 'none';
-            saveDB();
+            await loadDB();
         }
     };
 
     modalTask.style.display = 'flex';
 }
 
-formTask.addEventListener('submit', (e) => {
+formTask.addEventListener('submit', async (e) => {
     e.preventDefault();
     const editId = document.getElementById('form-task').getAttribute('data-edit-id');
+    const btnSubmit = formTask.querySelector('button[type="submit"]');
+    const originalText = btnSubmit.innerText;
+    btnSubmit.innerText = 'Salvando...';
+    btnSubmit.disabled = true;
+
     const taskData = {
-        clientId: document.getElementById('task-client').value,
+        client_id: document.getElementById('task-client').value,
         title: document.getElementById('task-title').value,
-        platform: document.getElementById('task-platform').value,
+        type: document.getElementById('task-platform').value,
         date: document.getElementById('task-date').value,
         status: document.getElementById('task-status').value
     };
 
     if (editId) {
-        const idx = db.socialPosts.findIndex(p => p.id == editId);
-        if (idx !== -1) db.socialPosts[idx] = { ...db.socialPosts[idx], ...taskData };
+        await supabase.from('posts').update(taskData).eq('id', editId);
     } else {
-        db.socialPosts.push({ id: Date.now(), ...taskData });
+        await supabase.from('posts').insert([taskData]);
     }
 
+    btnSubmit.innerText = originalText;
+    btnSubmit.disabled = false;
     modalTask.style.display = 'none';
-    saveDB();
+    await loadDB();
 });
 
 // Form: Traffic Campaign
@@ -572,43 +621,44 @@ function openEditTrafficModal(id) {
     document.getElementById('traffic-notes').value = camp.notes || "";
 
     btnDelTraffic.style.display = 'block';
-    btnDelTraffic.onclick = () => {
+    btnDelTraffic.onclick = async () => {
         if (confirm("Tem certeza que deseja excluir esta campanha?")) {
-            db.trafficCampaigns = db.trafficCampaigns.filter(c => c.id != id);
+            await supabase.from('traffic').delete().eq('id', id);
             modalTraffic.style.display = 'none';
-            saveDB();
+            await loadDB();
         }
     };
 
     modalTraffic.style.display = 'flex';
 }
 
-formTraffic.addEventListener('submit', (e) => {
+formTraffic.addEventListener('submit', async (e) => {
     e.preventDefault();
     const idField = document.getElementById('traffic-id').value;
     const currentClientId = document.getElementById('traffic-client-selector').value;
+    const btnSubmit = formTraffic.querySelector('button[type="submit"]');
+    const originalText = btnSubmit.innerText;
+    btnSubmit.innerText = 'Salvando...';
+    btnSubmit.disabled = true;
 
     const campData = {
-        clientId: currentClientId, // Force associate with current filtered view
-        name: document.getElementById('traffic-name').value,
-        startDate: document.getElementById('traffic-start').value,
-        budget: document.getElementById('traffic-budget').value,
-        spent: document.getElementById('traffic-spent').value,
-        leads: document.getElementById('traffic-leads').value,
-        notes: document.getElementById('traffic-notes').value
+        campaign_name: document.getElementById('traffic-name').value,
+        start_date: document.getElementById('traffic-start').value,
+        budget: Number(document.getElementById('traffic-budget').value),
+        spent: Number(document.getElementById('traffic-spent').value),
+        leads: Number(document.getElementById('traffic-leads').value),
+        details: document.getElementById('traffic-notes').value
     };
 
     if (idField) {
-        const idx = db.trafficCampaigns.findIndex(c => c.id == idField);
-        if (idx !== -1) {
-            // retain original clientId on edit
-            campData.clientId = db.trafficCampaigns[idx].clientId;
-            db.trafficCampaigns[idx] = { ...db.trafficCampaigns[idx], ...campData };
-        }
+        await supabase.from('traffic').update(campData).eq('id', idField);
     } else {
-        db.trafficCampaigns.push({ id: Date.now(), ...campData });
+        campData.client_id = currentClientId;
+        await supabase.from('traffic').insert([campData]);
     }
 
+    btnSubmit.innerText = originalText;
+    btnSubmit.disabled = false;
     modalTraffic.style.display = 'none';
-    saveDB();
+    await loadDB();
 });
