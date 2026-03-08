@@ -145,8 +145,32 @@ navItems.forEach(item => {
     });
 });
 
+// --- Monthly Filter Logic ---
+let currentFilterDate = new Date();
+const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
+function updateMonthFilterUI() {
+    const label = document.getElementById('label-current-month');
+    if (label) {
+        label.innerText = `${monthNames[currentFilterDate.getMonth()]} ${currentFilterDate.getFullYear()}`;
+    }
+}
+
+document.getElementById('btn-prev-month')?.addEventListener('click', () => {
+    currentFilterDate.setMonth(currentFilterDate.getMonth() - 1);
+    updateMonthFilterUI();
+    initDashboard();
+});
+
+document.getElementById('btn-next-month')?.addEventListener('click', () => {
+    currentFilterDate.setMonth(currentFilterDate.getMonth() + 1);
+    updateMonthFilterUI();
+    initDashboard();
+});
+
 // --- Initialization ---
 function initDashboard() {
+    updateMonthFilterUI();
     populateSelectors();
     renderClientList();
 
@@ -208,10 +232,24 @@ function renderGlobalDashboard(clientId) {
 
     let isGlobal = (clientId === 'all');
 
+    const filterYear = currentFilterDate.getFullYear();
+    const filterMonth = currentFilterDate.getMonth();
+
     // Aggregations
     let targetClients = isGlobal ? db.clients : db.clients.filter(c => c.id === clientId);
-    let targetPosts = isGlobal ? db.socialPosts : db.socialPosts.filter(p => p.clientId === clientId);
-    let targetCamps = isGlobal ? db.trafficCampaigns : db.trafficCampaigns.filter(c => c.clientId === clientId);
+
+    // Filter posts and traffic by current UI Month
+    let targetPosts = (isGlobal ? db.socialPosts : db.socialPosts.filter(p => p.clientId === clientId)).filter(p => {
+        if (!p.date) return false;
+        const dateObj = new Date(p.date + 'T12:00:00');
+        return dateObj.getFullYear() === filterYear && dateObj.getMonth() === filterMonth;
+    });
+
+    let targetCamps = (isGlobal ? db.trafficCampaigns : db.trafficCampaigns.filter(c => c.clientId === clientId)).filter(c => {
+        if (!c.startDate) return false;
+        const dateObj = new Date(c.startDate + 'T12:00:00');
+        return dateObj.getFullYear() === filterYear && dateObj.getMonth() === filterMonth;
+    });
 
     const activeClientsCount = db.clients.filter(c => c.status === 'active').length;
     const pendingTasks = targetPosts.filter(p => p.status !== 'done').length;
@@ -349,6 +387,15 @@ function renderKanban(clientId) {
         posts = posts.filter(p => p.clientId === clientId);
     }
 
+    const filterYear = currentFilterDate.getFullYear();
+    const filterMonth = currentFilterDate.getMonth();
+
+    posts = posts.filter(p => {
+        if (!p.date) return false;
+        const dateObj = new Date(p.date + 'T12:00:00');
+        return dateObj.getFullYear() === filterYear && dateObj.getMonth() === filterMonth;
+    });
+
     posts.forEach(post => {
         const clientName = db.clients.find(c => c.id === post.clientId)?.name;
         const cardNode = document.createElement('div');
@@ -427,7 +474,16 @@ function renderTraffic(clientId) {
     const clientName = db.clients.find(c => c.id === clientId)?.name;
     document.getElementById('traffic-client-name').innerText = `Visão 360º: ${clientName}`;
 
-    const campaigns = db.trafficCampaigns.filter(c => c.clientId === clientId);
+    let campaigns = db.trafficCampaigns.filter(c => c.clientId === clientId);
+
+    const filterYear = currentFilterDate.getFullYear();
+    const filterMonth = currentFilterDate.getMonth();
+
+    campaigns = campaigns.filter(c => {
+        if (!c.startDate) return false;
+        const dateObj = new Date(c.startDate + 'T12:00:00');
+        return dateObj.getFullYear() === filterYear && dateObj.getMonth() === filterMonth;
+    });
 
     let totalBudget = 0, totalSpent = 0, totalLeads = 0;
     const tbody = document.getElementById('traffic-campaigns-body');

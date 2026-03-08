@@ -68,8 +68,16 @@
         <main class="crm-main-content">
 
             <header class="crm-topbar">
-                <h2 id="page-title">Visão Geral</h2>
-                <div class="topbar-actions">
+                <h2 id="page-title" style="min-width: 150px;">Visão Geral</h2>
+
+                <div class="crm-month-filter">
+                    <button id="btn-prev-month" class="btn-icon" title="Mês Anterior">&lt;</button>
+                    <span id="label-current-month"
+                        style="font-weight: 600; min-width: 120px; text-align: center;">...</span>
+                    <button id="btn-next-month" class="btn-icon" title="Próximo Mês">&gt;</button>
+                </div>
+
+                <div class="topbar-actions" style="min-width: 150px; text-align: right;">
                     <button id="btn-new-client" class="btn btn-primary btn-sm">+ Novo Cliente</button>
                 </div>
             </header>
